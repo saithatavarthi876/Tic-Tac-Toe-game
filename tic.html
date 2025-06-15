@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe - AI vs Human</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      margin-top: 50px;
+      background: linear-gradient(135deg, #c3ecff, #e9d4ff);
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 5px;
+      margin: 20px auto;
+      width: 310px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: #fff;
+      border: 2px solid #333;
+      font-size: 2.5em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .cell:hover {
+      background-color: #f0f8ff;
+    }
+
+    .cell.disabled {
+      pointer-events: none;
+    }
+
+    .x {
+      color: #e74c3c; /* Red for AI (X) */
+    }
+
+    .o {
+      color: #3498db; /* Blue for Human (O) */
+    }
+
+    #message {
+      font-size: 1.2em;
+      margin-top: 20px;
+      color: #222;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tic Tac Toe - AI vs Human</h1>
+  <div id="board"></div>
+  <div id="message"></div>
+  <button onclick="resetGame()">Restart</button>
+
+  <script>
+    let board = ["", "", "", "", "", "", "", "", ""];
+    const human = "O";
+    const ai = "X";
+    let gameOver = false;
+
+    function drawBoard() {
+      const boardDiv = document.getElementById('board');
+      boardDiv.innerHTML = '';
+      board.forEach((cell, index) => {
+        const cellDiv = document.createElement('div');
+        cellDiv.className = 'cell';
+        cellDiv.textContent = cell;
+        if (cell === 'X') cellDiv.classList.add('x');
+        if (cell === 'O') cellDiv.classList.add('o');
+        if (cell || gameOver) {
+          cellDiv.classList.add('disabled');
+        }
+        cellDiv.addEventListener('click', () => handleMove(index));
+        boardDiv.appendChild(cellDiv);
+      });
+    }
+
+    function handleMove(index) {
+      if (board[index] || gameOver) return;
+      board[index] = human;
+      if (checkWinner(board, human)) {
+        gameOver = true;
+        document.getElementById('message').textContent = "You Win!";
+        drawBoard();
+        return;
+      }
+      if (board.every(cell => cell)) {
+        gameOver = true;
+        document.getElementById('message').textContent = "It's a Draw!";
+        drawBoard();
+        return;
+      }
+      const bestMove = getBestMove();
+      board[bestMove] = ai;
+      if (checkWinner(board, ai)) {
+        gameOver = true;
+        document.getElementById('message').textContent = "AI Wins!";
+      } else if (board.every(cell => cell)) {
+        gameOver = true;
+        document.getElementById('message').textContent = "It's a Draw!";
+      }
+      drawBoard();
+    }
+
+    function checkWinner(board, player) {
+      const winPatterns = [
+        [0,1,2], [3,4,5], [6,7,8], // rows
+        [0,3,6], [1,4,7], [2,5,8], // columns
+        [0,4,8], [2,4,6]           // diagonals
+      ];
+      return winPatterns.some(pattern =>
+        pattern.every(index => board[index] === player)
+      );
+    }
+
+    function getBestMove() {
+      let bestScore = -Infinity;
+      let move;
+      for (let i = 0; i < board.length; i++) {
+        if (!board[i]) {
+          board[i] = ai;
+          let score = minimax(board, 0, false);
+          board[i] = "";
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      }
+      return move;
+    }
+
+    function minimax(newBoard, depth, isMaximizing) {
+      if (checkWinner(newBoard, ai)) return 10 - depth;
+      if (checkWinner(newBoard, human)) return depth - 10;
+      if (newBoard.every(cell => cell)) return 0;
+
+      if (isMaximizing) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < newBoard.length; i++) {
+          if (!newBoard[i]) {
+            newBoard[i] = ai;
+            let score = minimax(newBoard, depth + 1, false);
+            newBoard[i] = "";
+            bestScore = Math.max(score, bestScore);
+          }
+        }
+        return bestScore;
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < newBoard.length; i++) {
+          if (!newBoard[i]) {
+            newBoard[i] = human;
+            let score = minimax(newBoard, depth + 1, true);
+            newBoard[i] = "";
+            bestScore = Math.min(score, bestScore);
+          }
+        }
+        return bestScore;
+      }
+    }
+
+    function resetGame() {
+      board = ["", "", "", "", "", "", "", "", ""];
+      gameOver = false;
+      document.getElementById('message').textContent = "";
+      drawBoard();
+    }
+
+    drawBoard();
+  </script>
+</body>
+</html>
